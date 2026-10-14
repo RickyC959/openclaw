@@ -1,0 +1,316 @@
+/* ==========================================================================
+   Atlas — stylesheet
+   One custom-property block per theme; everything else reads from those
+   variables, so switching themes is a single attribute change on <html>.
+   ========================================================================== */
+
+/* ---- Design tokens: light (default) ---- */
+:root {
+  color-scheme: light;
+
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #1c1c1a;
+  --text-muted: #55554f;
+  --border: #dcdcd4;
+  --accent: #1a5fb4;
+  --accent-contrast: #ffffff;
+  --focus: #b8442a;
+
+  /* Spacing and shape, shared by both themes. */
+  --space: 1rem;
+  --radius: 10px;
+  --measure: 68ch;
+}
+
+/* ---- Design tokens: dark ------------------------------------------------------------------
+   Applied in two situations:
+   1. The visitor's operating system prefers dark, and they have not chosen
+      a theme yet (no data-theme attribute on <html>).
+   2. The visitor explicitly chose dark via the toggle.
+   ------------------------------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #16161a;
+    --surface: #1f1f25;
+    --text: #f2f2ee;
+    --text-muted: #b6b6ae;
+    --border: #35353d;
+    --accent: #8ab4f8;
+    --accent-contrast: #16161a;
+    --focus: #ffb4a2;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #16161a;
+  --surface: #1f1f25;
+  --text: #f2f2ee;
+  --text-muted: #b6b6ae;
+  --border: #35353d;
+  --accent: #8ab4f8;
+  --accent-contrast: #16161a;
+  --focus: #ffb4a2;
+}
+
+/* ---- Base ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 var(--space) calc(var(--space) * 2);
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  /* Short transition so the theme switch reads as a change, not a glitch. */
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 1.2rem + 2.6vw, 3rem);
+  margin: 0 0 calc(var(--space) * 0.75);
+}
+
+h2 {
+  font-size: clamp(1.3rem, 1.1rem + 1vw, 1.75rem);
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: 0 0 0.25rem;
+}
+
+p {
+  margin: 0 0 var(--space);
+}
+
+a {
+  color: var(--accent);
+}
+
+/* ---- Layout ---- */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space);
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-top: calc(var(--space) * 2);
+}
+
+.brand {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* Nav sits between the brand and the theme toggle. */
+.site-nav {
+  display: flex;
+  gap: var(--space);
+  margin-left: auto;
+  margin-right: var(--space);
+}
+
+.site-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.intro {
+  font-size: 1.125rem;
+  color: var(--text-muted);
+}
+
+.section {
+  margin-top: calc(var(--space) * 2.5);
+}
+
+/*
+  auto-fit + minmax lets the feature cards reflow on their own.
+  Wide screens get multiple columns; a narrow phone gets one.
+*/
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature {
+  padding: var(--space);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.feature p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.cta-row {
+  margin-top: calc(var(--space) * 2.5);
+}
+
+.cta {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cta:hover {
+  text-decoration: underline;
+}
+
+/* ---- Download page ---- */
+
+/* The one obvious action on the page, so it gets more weight than .cta. */
+.download-button {
+  display: inline-block;
+  padding: 0.9rem 1.6rem;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.download-button:hover {
+  text-decoration: underline;
+}
+
+.download-meta {
+  margin-top: calc(var(--space) * 0.75);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Ordered list of install steps; numbers come from the element itself. */
+.steps {
+  padding-left: 1.25rem;
+  color: var(--text-muted);
+}
+
+.steps li {
+  margin-bottom: 0.5rem;
+}
+
+/*
+  A callout for the university-only rule and similar asides.
+  Uses a left border instead of a background so it reads in both themes.
+*/
+.callout {
+  margin: var(--space) 0;
+  padding: 0.75rem var(--space);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+.site-footer {
+  max-width: var(--measure);
+  margin: calc(var(--space) * 3) auto 0;
+  padding-top: var(--space);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* ---- Controls ---- */
+.theme-toggle {
+  padding: 0.45rem 0.9rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+
+/* ---- Keyboard focus: always visible, never removed ---- */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Skip link stays out of the way until it is focused. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 0.5rem 0.9rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  left: var(--space);
+  top: var(--space);
+}
+
+/* ---- Respect reduced-motion preferences ---- */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}

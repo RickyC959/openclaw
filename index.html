@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atlas — the club platform for your university</title>
+    <meta
+      name="description"
+      content="Atlas is the app universities use to host and run their clubs. Verified campus accounts only, from the club directory to events and membership."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Keyboard users can jump straight past the header. -->
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="index.html">Atlas</a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="download.html">Download</a>
+      </nav>
+
+      <!--
+        A real <button> so it is focusable and works with Enter and Space.
+        aria-pressed announces whether the dark theme is currently on.
+      -->
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+        aria-pressed="false"
+      >
+        Dark theme
+      </button>
+    </header>
+
+    <main id="main">
+      <h1>Every club on your campus, in one place</h1>
+
+      <p class="intro">
+        Atlas is the app universities use to host their clubs. One home for the
+        club directory, events, and membership — open only to people at your
+        university.
+      </p>
+
+      <section class="section" aria-labelledby="about-heading">
+        <h2 id="about-heading">About</h2>
+        <p>
+          Campus clubs run on scattered group chats, paper sign-up sheets, and
+          posters nobody reads twice. Atlas replaces that with a single place
+          students actually check: what clubs exist, what is happening this
+          week, and how to join.
+        </p>
+        <p>
+          Atlas is strictly for universities. Every account belongs to a
+          verified student, staff member, or recognised society at a
+          participating institution, so a club here is a real campus club, not
+          a public group.
+        </p>
+
+        <div class="callout">
+          <p>
+            <strong>University only.</strong> Sign-up requires a verified
+            university account. Communities outside a university are not
+            supported.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="features-heading">
+        <h2 id="features-heading">Features</h2>
+        <ul class="features">
+          <li class="feature">
+            <h3>Your campus club directory</h3>
+            <p>
+              Browse every registered society at your university, with a short
+              description and how to get involved.
+            </p>
+          </li>
+          <li class="feature">
+            <h3>Events and sign-ups</h3>
+            <p>
+              Clubs post what is coming up, students RSVP in a tap, and
+              organisers see who is coming.
+            </p>
+          </li>
+          <li class="feature">
+            <h3>Membership that runs itself</h3>
+            <p>
+              Join, leave, and track who is a member, without chasing anyone
+              for a spreadsheet.
+            </p>
+          </li>
+          <li class="feature">
+            <h3>One university per space</h3>
+            <p>
+              Spaces are scoped to a single institution, so students see their
+              own campus and nobody else's.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <p class="cta-row">
+        <a class="cta" href="download.html">Download Atlas</a>
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      <p>Atlas — the club platform for your university.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
