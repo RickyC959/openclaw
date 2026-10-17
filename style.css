@@ -256,6 +256,48 @@ main {
   margin-bottom: 0;
 }
 
+/* ---- Notices (sign-in status, errors, config warnings) ---- */
+
+.notice {
+  margin: var(--space) 0;
+  padding: 0.75rem var(--space);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+/*
+  Errors carry a thick left border AND bold text, so the meaning does not
+  depend on colour alone.
+*/
+.notice--error {
+  border-left-width: 6px;
+  border-left-color: var(--focus);
+  font-weight: 600;
+}
+
+.secondary-button {
+  padding: 0.6rem 1.1rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+}
+
+/* Buttons that are mid-action should look it. */
+button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
 .site-footer {
   max-width: var(--measure);
   margin: calc(var(--space) * 3) auto 0;

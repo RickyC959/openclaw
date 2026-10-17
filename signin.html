@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in to Atlas — the club platform for your university</title>
+    <meta
+      name="description"
+      content="Sign in to the Atlas web app with your university account."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="index.html">Atlas</a>
+
+      <nav class="site-nav" aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="download.html">Download</a>
+        <a href="signin.html" aria-current="page">Sign in</a>
+      </nav>
+
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+        aria-pressed="false"
+      >
+        Dark theme
+      </button>
+    </header>
+
+    <main id="main">
+      <h1>Sign in to Atlas</h1>
+
+      <p class="intro">
+        Use the account your university gave you. You sign in on your
+        institution's own page — Atlas never sees your password.
+      </p>
+
+      <!--
+        Shown and hidden by script.js. role="alert" makes screen readers read
+        config, error, and status messages as they appear.
+      -->
+      <p id="auth-message" class="notice notice--error" role="alert" hidden></p>
+
+      <!-- Signed out: offer the sign-in action. -->
+      <section
+        id="signed-out-panel"
+        class="section"
+        aria-labelledby="signin-heading"
+      >
+        <h2 id="signin-heading">Continue with your university account</h2>
+        <p>
+          You will be sent to your university's sign-in service and returned
+          here once you are verified.
+        </p>
+        <p class="cta-row">
+          <button id="signin-start" class="download-button" type="button">
+            Continue with your university account
+          </button>
+        </p>
+        <p class="download-meta">
+          University accounts only. Atlas supports verified students, staff,
+          and recognised societies.
+        </p>
+      </section>
+
+      <!--
+        Signed in: the entry point to the web app. There is no application
+        data here yet because no backend exists yet — see PLAN.md.
+      -->
+      <section
+        id="signed-in-panel"
+        class="section"
+        aria-labelledby="signed-in-heading"
+        hidden
+      >
+        <h2 id="signed-in-heading">You are signed in</h2>
+        <p>
+          Signed in as <strong id="account-email">your university account</strong>.
+        </p>
+
+        <div class="callout">
+          <p>
+            <strong>The web app is not built yet.</strong> This is the sign-in
+            gate only. The club directory, events, and membership pages are
+            described in <code>PLAN.md</code> and do not exist here.
+          </p>
+        </div>
+
+        <p class="cta-row">
+          <button id="signin-out" class="secondary-button" type="button">
+            Sign out
+          </button>
+        </p>
+      </section>
+
+      <p class="cta-row">
+        <a href="index.html">Back to the overview</a>
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      <p>Atlas — the club platform for your university.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,17 +1,22 @@
 # Atlas
 
-A two-page static website for Atlas, the app universities use to host their
-clubs. Strictly university based: verified students, staff, and recognised
+A static marketing and sign-in site for Atlas, the app universities use to host
+their clubs. Strictly university based: verified students, staff, and recognised
 societies at participating institutions.
 
 - **`index.html`** — overview: heading, short introduction, **About**, and
   **Features**, with a link through to the download page.
 - **`download.html`** — the **download link**, how to get started, and who can
   use Atlas.
-- Both pages share a light/dark **theme toggle**.
+- **`signin.html`** — the **sign-in page** and entry point to the web app,
+  using your university's single sign-on.
+- All pages share a light/dark **theme toggle**.
 
 Built with plain HTML, CSS, and JavaScript. No dependencies, no build step, no
-CDN, no accounts.
+CDN.
+
+For how to build the actual web, iOS, and Android applications, see
+**[PLAN.md](PLAN.md)**.
 
 ## Files
 
@@ -19,8 +24,10 @@ CDN, no accounts.
 | --------------- | ------------------------------------------------ |
 | `index.html`    | Overview page: About and Features                |
 | `download.html` | Download page with the download link             |
+| `signin.html`   | Sign-in page and web app entry point             |
 | `style.css`     | Theme colors, layout, responsive rules           |
-| `script.js`     | Theme toggle interaction                         |
+| `script.js`     | Theme toggle and OIDC sign-in                    |
+| `PLAN.md`       | How to build the web, iOS, and Android apps      |
 | `AGENTS.md`     | Project constraints for agents and contributors  |
 | `LICENSE`       | Project license                                  |
 
@@ -71,6 +78,49 @@ Double-click `index.html`, or open it from your browser, to view it as a
 the page behaves the same as it would when hosted.
 
 > Note: this project is intended for `localhost` only. Do not deploy it.
+>
+> The sign-in page needs a real server (Option 1 or 2), because OIDC redirects
+> use an `http(s)` redirect URI. It will not work from a `file://` URL.
+
+## Sign-in (university single sign-on)
+
+`signin.html` is the web app's entry point. It uses **OpenID Connect,
+Authorization Code flow with PKCE**:
+
+1. The visitor presses **Continue with your university account**.
+2. The browser is sent to the university's own sign-in page.
+3. The university verifies the person and sends them back with a code.
+4. Atlas exchanges the code for tokens, reads the verified email, and (if you
+   configured a domain allow-list) requires it to be a university address.
+
+**Atlas never sees or stores a password.** There is no password field anywhere
+in this project.
+
+### It is inert until you configure it
+
+The flow needs two values from your university's identity provider. They live in
+the `CONFIG` block near the top of the sign-in section in `script.js`:
+
+```js
+var CONFIG = {
+  issuer: "",   // e.g. "https://login.microsoftonline.com/<tenant-id>/v2.0"
+  clientId: "", // the application (client) ID from your provider
+  scopes: "openid profile email",
+  allowedEmailDomains: [], // e.g. ["student.ox.ac.uk"] to enforce university-only
+};
+```
+
+Until `issuer` and `clientId` are filled in, the page displays a plain warning
+and the button explains that sign-in is not configured. It does not fake a
+signed-in state.
+
+You must also register the redirect URI with your provider. It is the exact URL
+of the sign-in page, for example `http://localhost:8000/signin.html`.
+
+> Prototype caveat: because this is a browser-only client, it keeps tokens in
+> `sessionStorage`. For production with real student data, put a small backend
+> in front so tokens live in `httpOnly` cookies. See `PLAN.md`, "Backend for
+> frontend".
 
 ## The interaction: theme toggle
 
