@@ -26,7 +26,7 @@ describe("sessions", () => {
 
     const session = await getSession(fixture.db, token);
     expect(session).not.toBeNull();
-    expect(session?.account.email).toBe("ada@a.edu");
+    expect(session?.account.email).toBe("ada@uni-a.edu");
     expect(session?.institution.slug).toBe("uni-a");
   });
 

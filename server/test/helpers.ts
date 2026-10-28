@@ -28,17 +28,29 @@ export async function makeConfig(
     COOKIE_SECURE: "false",
   });
 
-  return { ...config, oidc: null, ...overrides };
+  return { ...config, oidc: null, devMockIdp: false, ...overrides };
 }
 
-export async function createFixture(): Promise<Fixture> {
+/** Config with the development fake IdP enabled, as `npm run dev` does. */
+export async function makeMockConfig(): Promise<AppConfig> {
+  return loadConfig({
+    NODE_ENV: "test",
+    APP_BASE_URL: "http://localhost:3000",
+    DATABASE_URL: "memory://",
+    SESSION_SECRET: TEST_SECRET,
+    COOKIE_SECURE: "false",
+    DEV_MOCK_IDP: "true",
+  });
+}
+
+export async function createFixture(config?: AppConfig): Promise<Fixture> {
   const db = await createDb("memory://");
   await migrate(db);
 
   const institutions = await db.query<{ id: string }>(
     `INSERT INTO institution (slug, name, domain, sso_issuer, sso_client_id)
-     VALUES ('uni-a', 'University A', 'a.edu', 'https://idp.a.edu', 'client-a'),
-            ('uni-b', 'University B', 'b.edu', 'https://idp.b.edu', 'client-b')
+     VALUES ('uni-a', 'University A', 'uni-a.edu', 'https://idp.a.edu', 'client-a'),
+            ('uni-b', 'University B', 'uni-b.edu', 'https://idp.b.edu', 'client-b')
      RETURNING id, slug`,
   );
 
@@ -47,8 +59,8 @@ export async function createFixture(): Promise<Fixture> {
 
   const accounts = await db.query<{ id: string }>(
     `INSERT INTO account (institution_id, email, full_name, oidc_sub)
-     VALUES ($1, 'ada@a.edu', 'Ada', 'sub-a'),
-            ($2, 'bob@b.edu', 'Bob', 'sub-b')
+     VALUES ($1, 'ada@uni-a.edu', 'Ada', 'demo-ada'),
+            ($2, 'bob@uni-b.edu', 'Bob', 'demo-bob')
      RETURNING id`,
     [institutionA, institutionB],
   );
@@ -67,7 +79,7 @@ export async function createFixture(): Promise<Fixture> {
 
   return {
     db,
-    config: await makeConfig(),
+    config: config ?? (await makeConfig()),
     ids: {
       institutionA,
       institutionB,

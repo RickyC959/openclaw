@@ -1,0 +1,54 @@
+# Atlas — local container demo.
+#
+#   docker compose up --build
+#   open http://localhost:3000
+#
+# This runs the whole thing: the marketing site, the sign-in flow, the API, and
+# a Postgres database. It uses the built-in FAKE identity provider and seeds
+# demo data, because there is no university IdP to talk to. That is why
+# NODE_ENV is development and DEV_MOCK_IDP is on.
+#
+# For a real deployment, set NODE_ENV=production and provide OIDC_ISSUER,
+# OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, a real SESSION_SECRET, and COOKIE_SECURE=true.
+# The server refuses to start with the fake IdP enabled in production.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DEV_MOCK_IDP: "true"
+      SEED_DEMO_DATA: "true"
+      APP_BASE_URL: http://localhost:3000
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DATABASE_URL: postgres://atlas:atlas@db:5432/atlas
+      # Demo-only default. Set SESSION_SECRET in a local .env for anything else.
+      SESSION_SECRET: ${SESSION_SECRET:-local-demo-session-secret-change-me}
+      COOKIE_SECURE: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas
+      POSTGRES_DB: atlas
+    volumes:
+      - atlas-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlas -d atlas"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  atlas-db:

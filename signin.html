@@ -40,61 +40,24 @@
         institution's own page — Atlas never sees your password.
       </p>
 
-      <!--
-        Shown and hidden by script.js. role="alert" makes screen readers read
-        config, error, and status messages as they appear.
-      -->
-      <p id="auth-message" class="notice notice--error" role="alert" hidden></p>
-
-      <!-- Signed out: offer the sign-in action. -->
-      <section
-        id="signed-out-panel"
-        class="section"
-        aria-labelledby="signin-heading"
-      >
+      <section class="section" aria-labelledby="signin-heading">
         <h2 id="signin-heading">Continue with your university account</h2>
         <p>
           You will be sent to your university's sign-in service and returned
           here once you are verified.
         </p>
         <p class="cta-row">
-          <button id="signin-start" class="download-button" type="button">
+          <!--
+            Sign-in is handled by the Atlas server, which keeps the session in
+            an httpOnly cookie. There is no client-side token handling.
+          -->
+          <a class="download-button" href="/auth/login">
             Continue with your university account
-          </button>
+          </a>
         </p>
         <p class="download-meta">
           University accounts only. Atlas supports verified students, staff,
           and recognised societies.
-        </p>
-      </section>
-
-      <!--
-        Signed in: the entry point to the web app. There is no application
-        data here yet because no backend exists yet — see PLAN.md.
-      -->
-      <section
-        id="signed-in-panel"
-        class="section"
-        aria-labelledby="signed-in-heading"
-        hidden
-      >
-        <h2 id="signed-in-heading">You are signed in</h2>
-        <p>
-          Signed in as <strong id="account-email">your university account</strong>.
-        </p>
-
-        <div class="callout">
-          <p>
-            <strong>The web app is not built yet.</strong> This is the sign-in
-            gate only. The club directory, events, and membership pages are
-            described in <code>PLAN.md</code> and do not exist here.
-          </p>
-        </div>
-
-        <p class="cta-row">
-          <button id="signin-out" class="secondary-button" type="button">
-            Sign out
-          </button>
         </p>
       </section>
 

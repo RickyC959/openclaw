@@ -26,8 +26,10 @@ For how to build the actual web, iOS, and Android applications, see
 | `download.html` | Download page with the download link             |
 | `signin.html`   | Sign-in page and web app entry point             |
 | `style.css`     | Theme colors, layout, responsive rules           |
-| `script.js`     | Theme toggle and OIDC sign-in                    |
+| `script.js`     | Theme toggle                                     |
 | `server/`       | Phase 1 backend: BFF, `/auth`, `/api/v1`, tests  |
+| `compose.yaml`  | One-command local demo: app + Postgres           |
+| `server/Dockerfile` | Container image for the app                  |
 | `migrations/`   | SQL schema, applied in order                     |
 | `docs/`         | ERD, API, auth, and Phase 1 notes                |
 | `PLAN.md`       | How to build the web, iOS, and Android apps      |
@@ -48,8 +50,54 @@ When the real download URL is known, change the `href` on the
 
 ## Run locally
 
-Everything here is static, so all you need is a local web server. Pick one of
-the options below and run it from the project directory.
+### Quick start: the whole thing (recommended)
+
+This runs the marketing site, sign-in, the API, and a database together.
+
+**With Docker — nothing else to install:**
+
+```sh
+docker compose up --build
+```
+
+Then open <http://localhost:3000/>. Press **Sign in**, then choose a demo
+account. To stop it, run `docker compose down` (add `-v` to delete the
+database too).
+
+The container is a **local demo**: it runs with `NODE_ENV=development`, seeds
+two universities, and mounts a fake identity provider at `/dev-idp` because
+there is no university IdP to talk to. That is why sign-in works without any
+setup. It is not a production configuration.
+
+**With Node 20+:**
+
+```sh
+cd server
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Then open <http://localhost:3000/>. `Ctrl+C` stops it. Local runs use embedded
+Postgres (PGlite), so there is no database server to install.
+
+Demo accounts (both have the same password: none):
+
+| Email            | University   |
+| ---------------- | ------------ |
+| `ada@uni-a.edu`  | University A |
+| `grace@uni-a.edu`| University A |
+| `bob@uni-b.edu`  | University B |
+
+Signing in as Ada and then as Bob shows the institution scoping: each one sees
+only their own campus's clubs.
+
+### Static site only
+
+The five marketing files can still be served on their own with any static file
+server. Sign-in will not work that way, because it needs the Atlas server.
+
+Pick one of the options below and run it from the project directory.
 
 ### Option 1: Python 3 (usually already installed)
 
@@ -87,43 +135,47 @@ the page behaves the same as it would when hosted.
 
 ## Sign-in (university single sign-on)
 
-`signin.html` is the web app's entry point. It uses **OpenID Connect,
-Authorization Code flow with PKCE**:
+`signin.html` is a plain page whose button links to `/auth/login`. All of the
+sign-in work happens on the server, using **OpenID Connect, Authorization Code
+flow with PKCE**:
 
-1. The visitor presses **Continue with your university account**.
-2. The browser is sent to the university's own sign-in page.
-3. The university verifies the person and sends them back with a code.
-4. Atlas exchanges the code for tokens, reads the verified email, and (if you
-   configured a domain allow-list) requires it to be a university address.
+1. `/auth/login` discovers the university's IdP and redirects the browser there.
+2. The university verifies the person on its own page.
+3. `/auth/callback` checks the signed `state`, exchanges the code, and verifies
+   the ID token's signature, issuer, audience, and nonce.
+4. The server maps the verified email domain to a participating institution,
+   creates an opaque session, and sets it in an `httpOnly` cookie.
 
 **Atlas never sees or stores a password.** There is no password field anywhere
-in this project.
+in this project, and no token ever reaches browser JavaScript.
 
-### It is inert until you configure it
+### Configuration
 
-The flow needs two values from your university's identity provider. They live in
-the `CONFIG` block near the top of the sign-in section in `script.js`:
+Sign-in needs values from your university's identity provider. They live in
+`server/.env` (see `server/.env.example`):
 
-```js
-var CONFIG = {
-  issuer: "",   // e.g. "https://login.microsoftonline.com/<tenant-id>/v2.0"
-  clientId: "", // the application (client) ID from your provider
-  scopes: "openid profile email",
-  allowedEmailDomains: [], // e.g. ["student.ox.ac.uk"] to enforce university-only
-};
+```sh
+OIDC_ISSUER=https://login.microsoftonline.com/<tenant-id>/v2.0
+OIDC_CLIENT_ID=<application-client-id>
+OIDC_CLIENT_SECRET=<client-secret>
+SESSION_SECRET=<32 random bytes, base64>
+APP_BASE_URL=http://localhost:3000
+COOKIE_SECURE=false   # true once served over HTTPS
 ```
 
-Until `issuer` and `clientId` are filled in, the page displays a plain warning
-and the button explains that sign-in is not configured. It does not fake a
-signed-in state.
+Register `http://localhost:3000/auth/callback` (or your deployed equivalent) as
+the redirect URI with the provider.
 
-You must also register the redirect URI with your provider. It is the exact URL
-of the sign-in page, for example `http://localhost:8000/signin.html`.
+Until a provider is configured, `/auth/login` returns `503` with a plain
+explanation. It never fabricates a signed-in state.
 
-> Prototype caveat: because this is a browser-only client, it keeps tokens in
-> `sessionStorage`. For production with real student data, put a small backend
-> in front so tokens live in `httpOnly` cookies. See `PLAN.md`, "Backend for
-> frontend".
+### The fake identity provider (development only)
+
+To make the flow runnable without a university, `npm run dev` and
+`docker compose up` mount a clearly labelled **fake** IdP at `/dev-idp`. It
+verifies nothing; clicking a demo account simply claims to be that person. It
+is used only when no real provider is configured, and the server refuses to
+start with it enabled in production.
 
 ## Backend (Phase 1)
 
@@ -159,11 +211,13 @@ What it does today:
 cd server
 cp .env.example .env
 npm install
-npm run migrate
 npm run dev
 ```
 
-Then open <http://localhost:3000/>. `Ctrl+C` stops it.
+Then open <http://localhost:3000/>. `Ctrl+C` stops it. `npm run dev` applies
+migrations, seeds the demo universities, and enables the fake IdP, so a fresh
+clone works with no further setup. Use `npm run seed` to seed explicitly, or
+`npm start` to run without the fake IdP.
 
 Local runs use **embedded Postgres (PGlite)**, so there is no database server to
 install; data is kept in `server/data/` (git-ignored). Production can point
@@ -172,6 +226,29 @@ install; data is kept in `server/data/` (git-ignored). Production can point
 Without `OIDC_ISSUER` and `OIDC_CLIENT_ID`, the server still starts and
 `/auth/login` answers `503` with a plain "not configured" page. It never fakes a
 signed-in state. `/app` and the API return `401` until you sign in.
+
+### Run it in a container
+
+```sh
+docker compose up --build          # http://localhost:3000
+docker compose down                # stop
+docker compose down -v             # stop and delete the database
+```
+
+The compose file runs the app and `postgres:17`. It is a **demo** configuration:
+`NODE_ENV=development`, `DEV_MOCK_IDP=true`, and `SEED_DEMO_DATA=true`.
+
+For a real container deployment, set `NODE_ENV=production` and provide
+`OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `SESSION_SECRET`,
+`APP_BASE_URL`, and `COOKIE_SECURE=true`. The image:
+
+- builds TypeScript to `server/dist` and runs it with `node` (no dev tooling),
+- binds `0.0.0.0` via `HOST` and exposes port 3000,
+- runs as an unprivileged `atlas` user,
+- has a `/healthz` health check,
+- reads `migrations/` and the five static files from the repository layout.
+
+The app waits for Postgres (with a retry) and applies migrations on start.
 
 ### Checks
 

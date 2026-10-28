@@ -47,7 +47,7 @@ describe("API v1", () => {
 
     expect(response.statusCode).toBe(200);
     const body = response.json();
-    expect(body.account.email).toBe("ada@a.edu");
+    expect(body.account.email).toBe("ada@uni-a.edu");
     expect(body.institution.slug).toBe("uni-a");
   });
 

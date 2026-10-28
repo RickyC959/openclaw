@@ -6,6 +6,8 @@ import type { AppConfig } from "./config.js";
 import type { Db } from "./db/index.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerApiRoutes } from "./api/routes.js";
+import { registerMockIdp } from "./dev/mock-idp.js";
+import { registerSite } from "./site.js";
 import { requireAuth } from "./auth/guard.js";
 import { escapeHtml, page } from "./html.js";
 
@@ -51,22 +53,10 @@ export async function buildApp({
 
   app.get("/healthz", async () => ({ status: "ok" }));
 
-  app.get("/", async (_request, reply) => {
-    return reply
-      .type("text/html")
-      .send(
-        page(
-          "Atlas server",
-          `<h1>Atlas server</h1>
-           <div class="box">
-             <p>This is the Phase 1 backend: sign-in and the read-only API.</p>
-             <p class="muted">Endpoints: <code>/auth/login</code>,
-             <code>/auth/me</code>, <code>/api/v1/me</code>,
-             <code>/api/v1/clubs</code>.</p>
-           </div>`,
-        ),
-      );
-  });
+  // Development-only fake identity provider; never mounted in production.
+  if (config.devMockIdp) {
+    await registerMockIdp(app, config);
+  }
 
   registerAuthRoutes(app, config, db);
   registerApiRoutes(app, config, db);
@@ -121,6 +111,9 @@ export async function buildApp({
       ),
     );
   });
+
+  // The five static marketing files, served from the same origin as the API.
+  await registerSite(app);
 
   app.setNotFoundHandler(async (_request, reply) => {
     return reply.code(404).send({ error: "not_found" });

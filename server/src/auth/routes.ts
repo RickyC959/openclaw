@@ -15,7 +15,7 @@ import {
   encodeFlowState,
   OIDC_FLOW_COOKIE,
 } from "./state.js";
-import { createSession, destroySession } from "./session.js";
+import { createSession, destroySession, getSession } from "./session.js";
 import { requireAuth, sameOriginOnly, sessionCookieOptions } from "./guard.js";
 import { escapeHtml, page } from "../html.js";
 
@@ -49,13 +49,36 @@ export function registerAuthRoutes(
   }
 
   app.get("/auth/login", async (request, reply) => {
+    // Already signed in: no reason to run the flow again.
+    const existingToken = request.cookies[config.session.cookieName];
+    if (existingToken && (await getSession(db, existingToken))) {
+      return reply.redirect("/app");
+    }
+
     if (!oidc) {
       const response = notConfigured();
       return reply.code(response.status).type("text/html").send(response.body);
     }
 
+    let available;
+    try {
+      available = await getDiscovery(oidc.issuer);
+    } catch (error) {
+      request.log.warn({ err: error }, "OIDC discovery failed");
+      return reply
+        .code(503)
+        .type("text/html")
+        .send(
+          page(
+            "Sign-in unavailable",
+            `<h1>Sign-in is unavailable</h1>
+             <div class="box"><p>Atlas could not reach the university sign-in service.
+             Please try again in a moment.</p></div>`,
+          ),
+        );
+    }
+
     const query = request.query as { inst?: string };
-    const available = await getDiscovery(oidc.issuer);
 
     const verifier = createCodeVerifier();
     const state = randomToken(24);
@@ -195,13 +218,38 @@ export function registerAuthRoutes(
       }
 
       const accounts = await db.query<{ id: string }>(
-        `INSERT INTO account (institution_id, email, full_name, oidc_sub, last_login_at)
-         VALUES ($1, $2, $3, $4, now())
-         ON CONFLICT (institution_id, oidc_sub)
-         DO UPDATE SET email = EXCLUDED.email,
-                       full_name = COALESCE(EXCLUDED.full_name, account.full_name),
-                       last_login_at = now()
-         RETURNING id`,
+        /*
+         * An account may already exist with the same subject but a new email,
+         * or the same email but a new subject (for example after an IdP
+         * migration). Matching either one avoids a duplicate-email failure.
+         */
+        `WITH by_sub AS (
+           UPDATE account
+              SET email = $2,
+                  full_name = COALESCE($3, account.full_name),
+                  last_login_at = now()
+            WHERE institution_id = $1 AND oidc_sub = $4
+            RETURNING id
+         ),
+         by_email AS (
+           UPDATE account
+              SET oidc_sub = $4,
+                  full_name = COALESCE($3, account.full_name),
+                  last_login_at = now()
+            WHERE institution_id = $1 AND email = $2
+              AND NOT EXISTS (SELECT 1 FROM by_sub)
+            RETURNING id
+         ),
+         inserted AS (
+           INSERT INTO account (institution_id, email, full_name, oidc_sub, last_login_at)
+           SELECT $1, $2, $3, $4, now()
+            WHERE NOT EXISTS (SELECT 1 FROM by_sub)
+              AND NOT EXISTS (SELECT 1 FROM by_email)
+           RETURNING id
+         )
+         SELECT id FROM by_sub
+         UNION ALL SELECT id FROM by_email
+         UNION ALL SELECT id FROM inserted`,
         [
           institution.id,
           email,

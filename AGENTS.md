@@ -69,15 +69,20 @@ constraints marked *(backend)* apply to `server/` and `frontend/`.
 - **Migrations are additive.** Never edit an applied migration; add a new one.
 - **Tests before claims.** `npm test` and `npm run typecheck` must pass before
   saying a backend task is done.
+- **The fake IdP is development only.** `DEV_MOCK_IDP` and `SEED_DEMO_DATA` are
+  ignored in production and the server refuses to start with the mock enabled.
+  Never weaken that check or copy the mock into a production path.
 
 ## Structure
 
 ```
 index.html      Overview page: heading, intro, About, Features, download link
 download.html   Download page: the download button, install steps, eligibility
-signin.html     Sign-in page: the web app entry point
+signin.html     Sign-in page: hands off to the server at /auth/login
 style.css       Theme tokens, layout, responsive rules
-script.js       Theme toggle + OIDC sign-in
+script.js       Theme toggle only; no token handling
+server/         BFF + /api/v1 (TypeScript, Fastify, Postgres/PGlite)
+compose.yaml    One-command local demo: app container + Postgres
 README.md       What it is and how to run it locally
 PLAN.md         How to build the web, iOS, and Android apps
 LICENSE         Project license
@@ -88,6 +93,9 @@ LICENSE         Project license
 - The interaction is the light/dark **theme toggle**, a single `<button>` in the
   header of both pages. Logic lives in `script.js`; see that file's header
   comment.
+- **Sign-in is server-side.** `signin.html` links to `/auth/login`; the session
+  is an `httpOnly` cookie. Do not reintroduce client-side OIDC or put tokens in
+  `localStorage`/`sessionStorage`.
 - Theme colors live in CSS custom properties at the top of `style.css`. Change
   colors there, not at the point of use.
 - `localStorage` is treated as optional. Never let a blocked or unavailable
