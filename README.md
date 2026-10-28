@@ -27,6 +27,9 @@ For how to build the actual web, iOS, and Android applications, see
 | `signin.html`   | Sign-in page and web app entry point             |
 | `style.css`     | Theme colors, layout, responsive rules           |
 | `script.js`     | Theme toggle and OIDC sign-in                    |
+| `server/`       | Phase 1 backend: BFF, `/auth`, `/api/v1`, tests  |
+| `migrations/`   | SQL schema, applied in order                     |
+| `docs/`         | ERD, API, auth, and Phase 1 notes                |
 | `PLAN.md`       | How to build the web, iOS, and Android apps      |
 | `AGENTS.md`     | Project constraints for agents and contributors  |
 | `LICENSE`       | Project license                                  |
@@ -121,6 +124,80 @@ of the sign-in page, for example `http://localhost:8000/signin.html`.
 > `sessionStorage`. For production with real student data, put a small backend
 > in front so tokens live in `httpOnly` cookies. See `PLAN.md`, "Backend for
 > frontend".
+
+## Backend (Phase 1)
+
+The static site above is the marketing surface. The signed-in product needs a
+server, so `server/` contains a small **BFF (backend for frontend)** and a
+read-only `/api/v1`. It is deliberately separate from the static files and has
+its own `package.json`.
+
+What it does today:
+
+- **Sign-in via the university IdP** (OIDC Authorization Code + PKCE). The
+  server verifies the ID token signature, issuer, audience, and nonce, then
+  issues an **opaque session token** in an `httpOnly` cookie. No token ever
+  reaches browser JavaScript, and no password is ever handled.
+- **Institution scoping in SQL.** The caller's `institution_id` comes only from
+  the session, never from the request.
+- **A server-rendered `/app`** page (no client JS yet) and these endpoints:
+
+| Endpoint            | Purpose                                         |
+| ------------------- | ----------------------------------------------- |
+| `GET /auth/login`   | Start sign-in (503 with an explanation if unconfigured) |
+| `GET /auth/callback`| Finish sign-in, set the session cookie          |
+| `GET /auth/me`      | Current account and institution                 |
+| `POST /auth/logout` | Revoke the session                              |
+| `GET /api/v1/me`    | Current account and institution                 |
+| `GET /api/v1/clubs` | Active clubs for the caller's institution       |
+| `GET /api/v1/clubs/:id` | One club plus its members                   |
+| `GET /healthz`      | Liveness check                                  |
+
+### Run it locally
+
+```sh
+cd server
+cp .env.example .env
+npm install
+npm run migrate
+npm run dev
+```
+
+Then open <http://localhost:3000/>. `Ctrl+C` stops it.
+
+Local runs use **embedded Postgres (PGlite)**, so there is no database server to
+install; data is kept in `server/data/` (git-ignored). Production can point
+`DATABASE_URL` at a normal `postgres://` URL and the same SQL applies.
+
+Without `OIDC_ISSUER` and `OIDC_CLIENT_ID`, the server still starts and
+`/auth/login` answers `503` with a plain "not configured" page. It never fakes a
+signed-in state. `/app` and the API return `401` until you sign in.
+
+### Checks
+
+```sh
+cd server
+npm run typecheck
+npm test
+```
+
+The tests cover PKCE, signed OIDC state (tampering and expiry), session
+creation/expiry/revocation, `401`s without a session, and cross-institution
+scoping for clubs.
+
+### Decisions and limits
+
+- **Fastify + TypeScript (strict)** on Node 20+.
+- **Sessions are rows in Postgres**, storing only a SHA-256 hash of the token.
+- **Migrations live in `migrations/`** and are applied once, in order, each in a
+  transaction. `db/schema.sql` points at them.
+- `/app` is a server-rendered placeholder. The React app is a later phase, and
+  the marketing `signin.html` will point at `/auth/login` once the static site
+  and the BFF are served from one origin.
+
+See `docs/PHASE1.md` for scope and acceptance criteria, `docs/API.md` for the
+contract, `docs/ERD.md` for the schema, and `docs/AUTH.md` for the sign-in
+design.
 
 ## The interaction: theme toggle
 

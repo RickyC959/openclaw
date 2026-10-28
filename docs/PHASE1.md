@@ -2,8 +2,29 @@
 
 Goal (from PLAN.md): **A real student signs in on the web and `/api/v1/me` returns them.**
 
-This doc breaks Phase 1 into decisions, tasks, and acceptance criteria. Nothing
-here is built yet — this is the plan to agree on before coding.
+This doc breaks Phase 1 into decisions, tasks, and acceptance criteria.
+
+---
+
+## 0. Status
+
+**Built:** T1–T5, T7 (headers, rate limiting, cookie flags, Origin check,
+scoping), T8 (unit + integration tests). See `server/` and run `npm test`.
+
+**Implemented differently from the table below:**
+
+- **D3 — raw SQL, not an ORM.** The schema is small and explicit, so a tiny
+  `Db` adapter (`query`, `exec`) over `pg` / PGlite keeps the SQL readable.
+- **Local dev and tests use embedded Postgres (PGlite)**, so nothing external
+  needs installing; production uses a `postgres://` URL with the same SQL.
+- **D6 — SameSite=Lax + Origin check** for now. There are no
+  cookie-authenticated writes yet, so a double-submit token is deferred until
+  the first one (membership join/leave).
+- **D9 / T6 — server-rendered `/app`, no client JS yet.** The React app is
+  deferred; Phase 1 only needs to prove sign-in and scoped reads.
+
+**Still open:** D7 (pilot university and its IdP), D11 (hosting and data
+residency), and the real download URL.
 
 ---
 

@@ -1,15 +1,27 @@
 # AGENTS.md
 
-Project constraints for Atlas, a one-page static website. These rules exist so
-the site stays tiny, portable, and reviewable by hand.
+Project constraints for Atlas: a static marketing site plus a Phase 1 backend
+(BFF + API). The static site stays tiny and dependency-free; the backend is a
+separate, conventional Node service.
 
-## Constraints
+## Scope
+
+- **`/` (marketing site):** `index.html`, `download.html`, `signin.html`,
+  `style.css`, `script.js`.
+- **`server/`:** the BFF and `/api/v1` (TypeScript, Fastify, Postgres).
+- **`frontend/`:** the signed-in web app (later phase).
+- **`db/`, `migrations/`, `docs/`:** schema, migrations, and written plans.
+
+The rules below marked *(static)* apply only to the marketing site. The
+constraints marked *(backend)* apply to `server/` and `frontend/`.
+
+## Static site constraints
 
 - **Five source files only:** `index.html`, `download.html`, `signin.html`,
   `style.css`, `script.js`. Do not add more source files without an explicit
   request.
 - **No dependencies.** No package manager, no build step, no bundler. Do not
-  install packages or add a `package.json`.
+  install packages or add a `package.json` inside the site root.
 - **No CDNs or remote assets.** No hosted fonts, CSS, JS, images, or analytics.
   Everything must work offline from the local files. Two deliberate exceptions:
   the outbound **download link** on `download.html`, and the **OIDC
@@ -38,6 +50,25 @@ the site stays tiny, portable, and reviewable by hand.
   publish anywhere.
 - **Do not commit, push, or install anything** unless the human explicitly asks.
 - **Keep all work inside this project directory.**
+
+## Backend constraints
+
+- **TypeScript, strict.** No `any` in new code without a comment explaining why.
+- **Fastify + Postgres.** Use the existing schema in `migrations/`. Do not add
+  a second database or a different framework without asking.
+- **Local dev must not require external services.** Local runs use embedded
+  Postgres (PGlite) through the same SQL; production uses a `postgres://` URL.
+- **Sessions are opaque tokens in Postgres**, sent only as `httpOnly`,
+  `Secure`, `SameSite=Lax` cookies. Tokens never appear in browser JS.
+- **Never handle passwords.** Identity comes from the university IdP (OIDC).
+  Verify the ID token signature and nonce on the server.
+- **Institution scoping is enforced in SQL.** Never trust an `institution_id`
+  from a request body or query. Derive it from the session.
+- **Secrets live in `.env`** and are never committed. `.env.example` documents
+  every required variable with a fake value.
+- **Migrations are additive.** Never edit an applied migration; add a new one.
+- **Tests before claims.** `npm test` and `npm run typecheck` must pass before
+  saying a backend task is done.
 
 ## Structure
 

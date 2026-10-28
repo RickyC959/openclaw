@@ -6,3 +6,9 @@ node_modules/
 
 # macOS Finder metadata
 .DS_Store
+
+# Local embedded Postgres data
+server/data/
+
+# Build output
+server/dist/
